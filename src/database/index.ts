@@ -94,12 +94,20 @@ export default class DataBase {
   createGame(indexRoom: string) {
     const room = this.rooms.find(room => room.roomId === indexRoom);
     const gameId = uuidv4();
-    const newGame = {
+    const newGame: Game = {
       gameId,
       players: []
     };
     room?.roomUsers.forEach(({ index }) => {
-
+      newGame.players.push(index);
+      this.connections[index].send(JSON.stringify({
+        type: "create_game",
+        data: JSON.stringify({
+          idGame: gameId,
+          idPlayer: index
+        }),
+        id: 0,
+      }));
     })
   }
 

@@ -8,7 +8,8 @@
         "start": "ts-node ./index.ts",
         "start:dev": "nodemon ./index.ts",
         "test": "echo \"Error: no test specified\" && exit 1",
-        "board": "ts-node ./src/board/index.ts"
+        "board": "ts-node ./src/board/index.ts",
+        "board:dev": "nodemon ./src/board/index.ts"
     },
     "author": "Andrei Auchynnikau",
     "keywords": [],

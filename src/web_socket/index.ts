@@ -26,6 +26,9 @@ wss.on('connection', function connection(ws) {
       case 'add_user_to_room': 
         DB.addUserToRoom(data, id);
         break;
+      case 'add_ships':
+        DB.startGame(data, id);
+        break;
     }
   });
 

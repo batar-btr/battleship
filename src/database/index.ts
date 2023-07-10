@@ -19,7 +19,10 @@ interface Room {
 
 interface Game {
   gameId: string,
-  players: string[]
+  players: string[],
+  ships: {
+    [key: string]: []
+  }
 }
 
 const isPlayerExist = (name: string, arr: Player[]) => arr.some(player => player.name === name);
@@ -96,7 +99,8 @@ export default class DataBase {
     const gameId = uuidv4();
     const newGame: Game = {
       gameId,
-      players: []
+      players: [],
+      ships: {}
     };
     room?.roomUsers.forEach(({ index }) => {
       newGame.players.push(index);
@@ -109,6 +113,35 @@ export default class DataBase {
         id: 0,
       }));
     })
+    this.games.push(newGame);
   }
 
+  turn(id: string) {
+    this.connections[id].send(JSON.stringify({
+      type: "turn",
+      data: JSON.stringify({
+        currentPlayer: id,
+      }),
+      id: 0,
+    }))
+  }
+
+  startGame(data: string, id: string) {
+    const { gameId, ships, indexPlayer } = JSON.parse(data);
+    const currentGame = this.games.find(game => game.gameId === gameId)!;
+    currentGame.ships[id] = ships;
+    console.log(ships,id);
+    console.log(this.players);
+    const oppositePlayerId = currentGame?.players.filter(id => id !== indexPlayer)[0];
+
+    this.connections[id].send(JSON.stringify({
+      type: 'start_game',
+      data: JSON.stringify({
+        ships,
+        currentPlayerIndex: oppositePlayerId
+      }),
+      id: 0
+    }))
+    this.turn(id);
+  }
 }

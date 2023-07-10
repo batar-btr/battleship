@@ -10,68 +10,68 @@ interface Ship {
   length: number
 }
 
-const ships: Ship[] = [
-  {
-    position: { x: 2, y: 3 },
-    direction: false,
-    type: 'huge',
-    length: 4
-  },
-  {
-    position: { x: 1, y: 6 },
-    direction: true,
-    type: 'large',
-    length: 3
-  },
-  {
-    position: { x: 4, y: 8 },
-    direction: false,
-    type: 'large',
-    length: 3
-  },
-  {
-    position: { x: 1, y: 0 },
-    direction: true,
-    type: 'medium',
-    length: 2
-  },
-  {
-    position: { x: 8, y: 8 },
-    direction: false,
-    type: 'medium',
-    length: 2
-  },
-  {
-    position: { x: 7, y: 4 },
-    direction: false,
-    type: 'medium',
-    length: 2
-  },
-  {
-    position: { x: 7, y: 2 },
-    direction: false,
-    type: 'small',
-    length: 1
-  },
-  {
-    position: { x: 3, y: 1 },
-    direction: false,
-    type: 'small',
-    length: 1
-  },
-  {
-    position: { x: 4, y: 5 },
-    direction: true,
-    type: 'small',
-    length: 1
-  },
-  {
-    position: { x: 8, y: 0 },
-    direction: true,
-    type: 'small',
-    length: 1
-  }
-]
+// const ships: Ship[] = [
+//   {
+//     position: { x: 2, y: 3 },
+//     direction: false,
+//     type: 'huge',
+//     length: 4
+//   },
+//   {
+//     position: { x: 1, y: 6 },
+//     direction: true,
+//     type: 'large',
+//     length: 3
+//   },
+//   {
+//     position: { x: 4, y: 8 },
+//     direction: false,
+//     type: 'large',
+//     length: 3
+//   },
+//   {
+//     position: { x: 1, y: 0 },
+//     direction: true,
+//     type: 'medium',
+//     length: 2
+//   },
+//   {
+//     position: { x: 8, y: 8 },
+//     direction: false,
+//     type: 'medium',
+//     length: 2
+//   },
+//   {
+//     position: { x: 7, y: 4 },
+//     direction: false,
+//     type: 'medium',
+//     length: 2
+//   },
+//   {
+//     position: { x: 7, y: 2 },
+//     direction: false,
+//     type: 'small',
+//     length: 1
+//   },
+//   {
+//     position: { x: 3, y: 1 },
+//     direction: false,
+//     type: 'small',
+//     length: 1
+//   },
+//   {
+//     position: { x: 4, y: 5 },
+//     direction: true,
+//     type: 'small',
+//     length: 1
+//   },
+//   {
+//     position: { x: 8, y: 0 },
+//     direction: true,
+//     type: 'small',
+//     length: 1
+//   }
+// ]
 
 type CellStatus = 'empty' | 'alive' | 'shot';
 
@@ -89,7 +89,7 @@ class Cell {
   }
 }
 
-class Board {
+export default class Board {
   ships: Ship[];
   board: Cell[][];
   shipCells: number[][][];
@@ -157,9 +157,9 @@ class Board {
 
     const result = cellsAround
       .filter(([x, y]) => (x > 0 && x < 10) && (y > 0 && y < 10)) // remove out of range cells
-      .filter(([x,y]) => !coords.some(cell => (cell[0] === x) && (cell[1] === y)));
-      
-    console.log(result)
+      .filter(([x, y]) => !coords.some(cell => (cell[0] === x) && (cell[1] === y)));
+
+    return result;
   }
 
   checkAttack(x: number, y: number) {
@@ -167,7 +167,7 @@ class Board {
     const shipIndex = this.shipCells.findIndex(cells => cells.some(cell => cell[0] === x && cell[1] === y));
     if (shipIndex === -1) {
       console.log(x, y, 'miss');
-      return;
+      return { x, y, status: 'miss' };
     }
     this.board[x][y].status = 'shot';
 
@@ -175,23 +175,23 @@ class Board {
     if (this.isKilled(currentShip)) {
       console.log(x, y, 'Ship killed!', currentShip);
       this.getCellAround(shipIndex);
+      return { x, y, status: 'killed', cellsAround: this.getCellAround(shipIndex) }
     } else {
       console.log(x, y, 'Shot', currentShip)
+      return { x, y, status: 'shot' }
     }
   }
 }
 
-const board = new Board(ships);
+// const board = new Board(ships);
 
-console.log(board.board);
-
-board.checkAttack(3, 8);
-board.checkAttack(4, 8);
-board.checkAttack(5, 8);
-board.checkAttack(6, 8);
-board.checkAttack(7, 8);
-board.checkAttack(8, 8);
-board.checkAttack(9, 8);
+// board.checkAttack(3, 8);
+// board.checkAttack(4, 8);
+// board.checkAttack(5, 8);
+// board.checkAttack(6, 8);
+// board.checkAttack(7, 8);
+// board.checkAttack(8, 8);
+// board.checkAttack(9, 8);
 
 
 

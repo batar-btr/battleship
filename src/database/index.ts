@@ -1,6 +1,8 @@
 import { WebSocket } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
 import personalResponse from '../responses/personal-response.ts';
+import Board from '../board/index.ts';
+import attackResponse from '../responses/attack-response.ts';
 
 export interface Player {
   name: string;
@@ -20,8 +22,8 @@ interface Room {
 interface Game {
   gameId: string,
   players: string[],
-  ships: {
-    [key: string]: []
+  boards: {
+    [key: string]: Board
   }
 }
 
@@ -100,7 +102,7 @@ export default class DataBase {
     const newGame: Game = {
       gameId,
       players: [],
-      ships: {}
+      boards: {}
     };
     room?.roomUsers.forEach(({ index }) => {
       newGame.players.push(index);
@@ -129,19 +131,38 @@ export default class DataBase {
   startGame(data: string, id: string) {
     const { gameId, ships, indexPlayer } = JSON.parse(data);
     const currentGame = this.games.find(game => game.gameId === gameId)!;
-    currentGame.ships[id] = ships;
-    console.log(ships,id);
-    console.log(this.players);
-    const oppositePlayerId = currentGame?.players.filter(id => id !== indexPlayer)[0];
+    currentGame.boards[id] = new Board(ships);
+
+    // const oppositePlayerId = currentGame?.players.filter(id => id !== indexPlayer)[0];
 
     this.connections[id].send(JSON.stringify({
       type: 'start_game',
       data: JSON.stringify({
         ships,
-        currentPlayerIndex: oppositePlayerId
+        // currentPlayerIndex: oppositePlayerId
+        currentPlayerIndex: id
       }),
       id: 0
     }))
     this.turn(id);
+  }
+
+  atack(data: string, id: string) {
+    const { gameId, x, y, indexPlayer} = JSON.parse(data);
+    const currentGame = this.games.find(game => game.gameId === gameId)!;
+    const oppositePlayerId = currentGame?.players.filter(id => id !== indexPlayer)[0];
+    const board = currentGame.boards[oppositePlayerId];
+    const {status, cellsAround} = board.checkAttack(x, y);
+
+    if(status === 'killed') {
+      this.connections[id].send(attackResponse(status, x, y, id));
+      this.connections[oppositePlayerId].send(attackResponse(status, x, y, id));
+    } else {
+      this.connections[id].send(attackResponse(status, x, y, id));
+      this.connections[oppositePlayerId].send(attackResponse(status, x, y, id));
+    }
+
+    console.log(`ID: ${id}`)
+    console.log(`IndexPlayer: ${indexPlayer}`)
   }
 }

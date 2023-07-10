@@ -29,6 +29,9 @@ wss.on('connection', function connection(ws) {
       case 'add_ships':
         DB.startGame(data, id);
         break;
+      case 'attack':
+        DB.atack(data, id);
+        break;
     }
   });
 

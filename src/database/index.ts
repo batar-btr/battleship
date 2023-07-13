@@ -27,6 +27,10 @@ interface Game {
   };
   currentPlayerTurn: 1 | 0;
 }
+interface Winner {
+  name: string;
+  wins: number;
+}
 
 const isPlayerExist = (name: string, arr: Player[]) => arr.some(player => player.name === name);
 
@@ -36,12 +40,14 @@ export default class DataBase {
   connections: Connection;
   rooms: Room[];
   games: Game[];
+  winners: Winner[];
 
   constructor() {
     this.players = [];
     this.connections = {};
     this.rooms = [];
-    this.games = []
+    this.games = [];
+    this.winners = [];
   }
 
   addNewPlayer(data: string, id: string, ws: WebSocket) {
@@ -63,6 +69,34 @@ export default class DataBase {
         type: "update_room",
         data: JSON.stringify(this.rooms.filter(room => room.roomUsers.length === 1)),
         id: 0
+      }))
+    })
+    this.updateWinners();
+  }
+
+  addWinner(id:string) {
+    const playerIndex = this.players.findIndex(player => player.id === id);
+    const name = this.players[playerIndex].name;
+    
+    if(this.winners.some(winner => winner.name === name )) {
+      const winnerIndex = this.winners.findIndex(winner => winner.name === name);
+      this.winners[winnerIndex].wins += 1;
+    } else {
+      this.winners.push({
+        name,
+        wins: 1
+      })
+    }
+    this.updateWinners();
+  }
+
+  updateWinners() {
+    Object.keys(this.connections).forEach(key => {
+      const client = this.connections[key];
+      client.send(JSON.stringify({
+        type: "update_winners",
+        data: JSON.stringify(this.winners),
+        id: 0,
       }))
     })
   }
@@ -168,12 +202,12 @@ export default class DataBase {
     const oppositePlayerId = currentGame?.players.filter(id => id !== indexPlayer)[0];
     const board = currentGame.boards[oppositePlayerId].board;
 
-    let x = Math.floor(Math.random()*10);
-    let y = Math.floor(Math.random()*10);
+    let x = Math.floor(Math.random() * 10);
+    let y = Math.floor(Math.random() * 10);
 
-    while(!board[x][y].shotPossibility) {
-      x = Math.floor(Math.random()*10);
-      y = Math.floor(Math.random()*10);
+    while (!board[x][y].shotPossibility) {
+      x = Math.floor(Math.random() * 10);
+      y = Math.floor(Math.random() * 10);
     }
 
     this.atack(JSON.stringify({
@@ -181,7 +215,7 @@ export default class DataBase {
       x,
       y,
       indexPlayer: id
-    }),id);
+    }), id);
 
   }
 
@@ -211,14 +245,25 @@ export default class DataBase {
         this.connections[id].send(attackResponse('miss', x, y, id));
         this.connections[oppositePlayerId].send(attackResponse('miss', x, y, id));
       })
-      if(board.isEndGame(id, board.board)) {
+      if (board.isEndGame(id, board.board)) {
+        currentGame.players.forEach(playerId => {
+          this.connections[playerId].send(JSON.stringify({
+            type: "finish",
+            data: JSON.stringify({
+              winPlayer: id,
+            }),
+            id: 0,
+          }));
+        });
+        this.addWinner(id);
         console.log('END GAME!!!')
+        return;
       }
     } else {
       this.connections[id].send(attackResponse(status, x, y, id));
       this.connections[oppositePlayerId].send(attackResponse(status, x, y, id));
     }
-    
+
 
     this.turn(gameId, status);
   }

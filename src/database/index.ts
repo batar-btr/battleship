@@ -20,11 +20,12 @@ interface Room {
 };
 
 interface Game {
-  gameId: string,
-  players: string[],
+  gameId: string;
+  players: string[];
   boards: {
     [key: string]: Board
-  }
+  };
+  currentPlayerTurn: 1 | 0;
 }
 
 const isPlayerExist = (name: string, arr: Player[]) => arr.some(player => player.name === name);
@@ -102,7 +103,8 @@ export default class DataBase {
     const newGame: Game = {
       gameId,
       players: [],
-      boards: {}
+      boards: {},
+      currentPlayerTurn: 0
     };
     room?.roomUsers.forEach(({ index }) => {
       newGame.players.push(index);
@@ -118,14 +120,24 @@ export default class DataBase {
     this.games.push(newGame);
   }
 
-  turn(id: string) {
-    this.connections[id].send(JSON.stringify({
-      type: "turn",
-      data: JSON.stringify({
-        currentPlayer: id,
-      }),
-      id: 0,
-    }))
+  turn(gameId: string, shotStatus?: string) {
+    const currentGame = this.games.find(game => game.gameId === gameId)!;
+    const { currentPlayerTurn } = currentGame;
+
+    if (shotStatus === 'miss') {
+      currentPlayerTurn === 0 ? currentGame.currentPlayerTurn = 1 : currentGame.currentPlayerTurn = 0
+    }
+    // console.log('CUR-IDX:', currentPlayerTurn, shotStatus)
+    // console.log(currentGame);
+    currentGame.players.forEach(playerIndex => {
+      this.connections[playerIndex].send(JSON.stringify({
+        type: "turn",
+        data: JSON.stringify({
+          currentPlayer: currentGame.players[currentGame.currentPlayerTurn],
+        }),
+        id: 0,
+      }))
+    })
   }
 
   startGame(data: string, id: string) {
@@ -134,35 +146,80 @@ export default class DataBase {
     currentGame.boards[id] = new Board(ships);
 
     // const oppositePlayerId = currentGame?.players.filter(id => id !== indexPlayer)[0];
+    if (Object.keys(currentGame.boards).length === 2) {
+      currentGame.players.forEach(playerId => {
+        this.connections[playerId].send(JSON.stringify({
+          type: 'start_game',
+          data: JSON.stringify({
+            ships: currentGame.boards[playerId].ships,
+            // currentPlayerIndex: oppositePlayerId
+            currentPlayerIndex: id
+          }),
+          id: 0
+        }))
+      })
+      this.turn(gameId);
+    }
+  }
 
-    this.connections[id].send(JSON.stringify({
-      type: 'start_game',
-      data: JSON.stringify({
-        ships,
-        // currentPlayerIndex: oppositePlayerId
-        currentPlayerIndex: id
-      }),
-      id: 0
-    }))
-    this.turn(id);
+  randomAttack(data: string, id: string) {
+    const { gameId, indexPlayer } = JSON.parse(data);
+    const currentGame = this.games.find(game => game.gameId === gameId)!;
+    const oppositePlayerId = currentGame?.players.filter(id => id !== indexPlayer)[0];
+    const board = currentGame.boards[oppositePlayerId].board;
+
+    let x = Math.floor(Math.random()*10);
+    let y = Math.floor(Math.random()*10);
+
+    while(!board[x][y].shotPossibility) {
+      x = Math.floor(Math.random()*10);
+      y = Math.floor(Math.random()*10);
+    }
+
+    this.atack(JSON.stringify({
+      gameId,
+      x,
+      y,
+      indexPlayer: id
+    }),id);
+
   }
 
   atack(data: string, id: string) {
-    const { gameId, x, y, indexPlayer} = JSON.parse(data);
+    const { gameId, x, y, indexPlayer } = JSON.parse(data);
     const currentGame = this.games.find(game => game.gameId === gameId)!;
+
+    const currentTurnId = currentGame.players[currentGame.currentPlayerTurn];
+    if (currentTurnId !== indexPlayer) {
+      return;
+    }
+
+
     const oppositePlayerId = currentGame?.players.filter(id => id !== indexPlayer)[0];
     const board = currentGame.boards[oppositePlayerId];
-    const {status, cellsAround} = board.checkAttack(x, y);
 
-    if(status === 'killed') {
+    if (!board.board[x][y].shotPossibility) {
+      return;
+    }
+
+    const { status, cellsAround } = board.checkAttack(x, y);
+
+    if (status === 'killed') {
       this.connections[id].send(attackResponse(status, x, y, id));
       this.connections[oppositePlayerId].send(attackResponse(status, x, y, id));
+      cellsAround?.forEach(([x, y]) => {
+        this.connections[id].send(attackResponse('miss', x, y, id));
+        this.connections[oppositePlayerId].send(attackResponse('miss', x, y, id));
+      })
+      if(board.isEndGame(id, board.board)) {
+        console.log('END GAME!!!')
+      }
     } else {
       this.connections[id].send(attackResponse(status, x, y, id));
       this.connections[oppositePlayerId].send(attackResponse(status, x, y, id));
     }
+    
 
-    console.log(`ID: ${id}`)
-    console.log(`IndexPlayer: ${indexPlayer}`)
+    this.turn(gameId, status);
   }
 }

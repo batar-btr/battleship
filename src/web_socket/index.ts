@@ -32,6 +32,8 @@ wss.on('connection', function connection(ws) {
       case 'attack':
         DB.atack(data, id);
         break;
+      case 'randomAttack':
+        DB.randomAttack(data, id); 
     }
   });
 

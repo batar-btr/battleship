@@ -156,28 +156,32 @@ export default class Board {
     }
 
     const result = cellsAround
-      .filter(([x, y]) => (x > 0 && x < 10) && (y > 0 && y < 10)) // remove out of range cells
+      .filter(([x, y]) => (x >= 0 && x < 10) && (y >= 0 && y < 10)) // remove out of range cells
       .filter(([x, y]) => !coords.some(cell => (cell[0] === x) && (cell[1] === y)));
 
     return result;
+  }
+
+  isEndGame(id: string, board: Cell[][]): boolean {
+    return !board.flat().some(cell => cell.status === 'alive');
   }
 
   checkAttack(x: number, y: number) {
     this.board[x][y].shotPossibility = false;
     const shipIndex = this.shipCells.findIndex(cells => cells.some(cell => cell[0] === x && cell[1] === y));
     if (shipIndex === -1) {
-      console.log(x, y, 'miss');
+      // console.log(x, y, 'miss');
       return { x, y, status: 'miss' };
     }
     this.board[x][y].status = 'shot';
 
     const currentShip = this.shipCells[shipIndex];  // [ [ 4, 8 ], [ 5, 8 ], [ 6, 8 ] ],
     if (this.isKilled(currentShip)) {
-      console.log(x, y, 'Ship killed!', currentShip);
+      // console.log(x, y, 'Ship killed!', currentShip);
       this.getCellAround(shipIndex);
       return { x, y, status: 'killed', cellsAround: this.getCellAround(shipIndex) }
     } else {
-      console.log(x, y, 'Shot', currentShip)
+      // console.log(x, y, 'Shot', currentShip)
       return { x, y, status: 'shot' }
     }
   }

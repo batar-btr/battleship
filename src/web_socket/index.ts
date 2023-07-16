@@ -37,5 +37,18 @@ wss.on('connection', function connection(ws) {
     }
   });
 
-  // ws.send('something');
+  ws.on('close', () => {
+    console.log(`Disconnect client ${id}`);
+  })
+
 });
+
+wss.on('listening', () => {
+  console.log(`Start websocket server on the ${PORT} port!`);
+})
+
+
+process.on('SIGINT', () => {
+  console.log('Good bye!)')
+  wss.close();
+})

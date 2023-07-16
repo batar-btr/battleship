@@ -10,69 +10,6 @@ interface Ship {
   length: number
 }
 
-// const ships: Ship[] = [
-//   {
-//     position: { x: 2, y: 3 },
-//     direction: false,
-//     type: 'huge',
-//     length: 4
-//   },
-//   {
-//     position: { x: 1, y: 6 },
-//     direction: true,
-//     type: 'large',
-//     length: 3
-//   },
-//   {
-//     position: { x: 4, y: 8 },
-//     direction: false,
-//     type: 'large',
-//     length: 3
-//   },
-//   {
-//     position: { x: 1, y: 0 },
-//     direction: true,
-//     type: 'medium',
-//     length: 2
-//   },
-//   {
-//     position: { x: 8, y: 8 },
-//     direction: false,
-//     type: 'medium',
-//     length: 2
-//   },
-//   {
-//     position: { x: 7, y: 4 },
-//     direction: false,
-//     type: 'medium',
-//     length: 2
-//   },
-//   {
-//     position: { x: 7, y: 2 },
-//     direction: false,
-//     type: 'small',
-//     length: 1
-//   },
-//   {
-//     position: { x: 3, y: 1 },
-//     direction: false,
-//     type: 'small',
-//     length: 1
-//   },
-//   {
-//     position: { x: 4, y: 5 },
-//     direction: true,
-//     type: 'small',
-//     length: 1
-//   },
-//   {
-//     position: { x: 8, y: 0 },
-//     direction: true,
-//     type: 'small',
-//     length: 1
-//   }
-// ]
-
 type CellStatus = 'empty' | 'alive' | 'shot';
 
 class Cell {
@@ -186,21 +123,3 @@ export default class Board {
     }
   }
 }
-
-// const board = new Board(ships);
-
-// board.checkAttack(3, 8);
-// board.checkAttack(4, 8);
-// board.checkAttack(5, 8);
-// board.checkAttack(6, 8);
-// board.checkAttack(7, 8);
-// board.checkAttack(8, 8);
-// board.checkAttack(9, 8);
-
-
-
-
-
-// function checkShipAlive(shipIndex: number) {
-//   const ship = shipCells[shipIndex];
-// }
